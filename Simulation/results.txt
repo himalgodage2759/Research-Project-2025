@@ -1,0 +1,11 @@
+Quality 100% - Image Size: 743688 bytes, RTT: 0.013322591781616211 seconds, Server Response: {'message': 'Image received successfully', 'transmission_time': 0.005372047424316406}
+client-1       | Quality 75% - Image Size: 745392 bytes, RTT: 0.0072405338287353516 seconds, Server Response: {'message': 'Image received successfully', 'transmission_time': 0.00301361083984375}
+client-1       | Quality 50% - Image Size: 779436 bytes, RTT: 0.007009983062744141 seconds, Server Response: {'message': 'Image received successfully', 'transmission_time': 0.0022644996643066406}
+client-1       | Quality 25% - Image Size: 553628 bytes, RTT: 0.0069696903228759766 seconds, Server Response: {'message': 'Image received successfully', 'transmission_time': 0.002739429473876953}
+client-1       | Quality 10% - Image Size: 358072 bytes, RTT: 0.005587100982666016 seconds, Server Response: {'message': 'Image received successfully', 'transmission_time': 0.001332998275756836}
+
+2024-10-25 15:42:57 client-1       | Predicted speed (ML): 7.79
+2024-10-25 15:42:57 client-1       | RTT for ML: 0.022774457931518555 seconds
+2024-10-25 15:42:57 client-1       | Predicted speed (DL): 78.26448059082031
+2024-10-25 15:42:57 client-1       | RTT for DL: 0.1205904483795166 seconds
+
