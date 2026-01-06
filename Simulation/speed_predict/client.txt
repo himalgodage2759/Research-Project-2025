@@ -1,0 +1,70 @@
+import requests
+import json
+import time
+
+# Define the input data (as in your example)
+new_input = {
+    'num_vehicles_ego_lane': 88,
+    'num_vehicles_other_lane': 83,
+    'num_vulnerable_vehicles_ego_lane': 80,
+    'num_vulnerable_vehicles_other_lane': 80,
+    'num_lane_instances': 0,
+    'num_pedestrians_ego_lane': 80,
+    'num_pedestrians_other_lane': 0,
+    'num_animals_ego_lane': 0,
+    'num_animals_other_lane': 0,
+    'num_traffic_signs_ego_lane': 86,
+    'num_traffic_signs_ego_road': 83,
+    'num_traffic_signals_ego_lane': 85,
+    'num_traffic_signals_ego_road': 86,
+    'num_traffic_guides_ego_lane': 0,
+    'num_traffic_guides_ego_road': 0,
+    'num_traffic_beacons_ego_lane': 0,
+    'num_traffic_beacons_ego_road': 0,
+    'num_dynamic_barriers_ego_lane': 0,
+    'num_dynamic_barriers_ego_road': 0,
+    'ContainsCrossWalk': 1,
+    'ContainsTrafficSign': 1,
+    'ContainsMarker': 0,
+    'ContainsOther': 0,
+    'ContainsPictogram': 0,
+    'ContainsText': 0,
+    'time': '2024-10-23T12:00:00',
+    'road_type': 'city',
+    'weather_condition': 'rain',
+    'road_condition': 'normal',
+    'time_of_day': 'day',
+    'lag_speed_1': 40.0,
+    'lag_speed_2': 45.0,
+}
+
+# Measure time before sending the request
+start_time2 = time.time()
+
+# Send request to ML model
+response_ml = requests.post('http://127.0.0.1:5000/predict/ml', json=new_input)
+
+# Measure time after receiving the response
+end_time2 = time.time()
+
+# Calculate RTT
+rtt2 = end_time2 - start_time2
+
+print(f"Predicted speed (ML): {response_ml.json()['predicted_speed']}")
+print(f'RTT for ML: {rtt2} seconds')
+
+
+# Measure time before sending the request
+start_time = time.time()
+
+# Send request to DL model
+response_dl = requests.post('http://127.0.0.1:5000/predict/dl', json=new_input)
+
+# Measure time after receiving the response
+end_time = time.time()
+
+# Calculate RTT
+rtt = end_time - start_time
+
+print(f"Predicted speed (DL): {response_dl.json()['predicted_speed']}")
+print(f'RTT for DL: {rtt} seconds')
