@@ -1,0 +1,107 @@
+from flask import Flask, request, jsonify
+import tensorflow as tf
+import joblib
+import pandas as pd
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+import platform
+import socket
+
+# Load the models
+best_dl_model = tf.keras.models.load_model('best_dl_model.keras')
+best_ml_model = joblib.load('best_ml_model.pkl')
+
+# Load the pre-trained OneHotEncoder and scaler
+encoder = joblib.load('encoder.pkl')
+scaler = joblib.load('scaler.pkl')
+
+# Initialize Flask app
+app = Flask(__name__)
+
+# Function to get server IP (edge server)
+def get_server_ip():
+    hostname = socket.gethostname()
+    server_ip = socket.gethostbyname(hostname)
+    return server_ip
+
+# Preprocess input data
+def preprocess_input(input_data):
+
+    df_input = pd.DataFrame([input_data])
+
+    # Convert time to datetime and extract temporal features
+    df_input['time'] = pd.to_datetime(df_input['time'], format='ISO8601')
+    df_input['hour'] = df_input['time'].dt.hour
+    df_input['day_of_week'] = df_input['time'].dt.dayofweek
+    df_input['day_of_month'] = df_input['time'].dt.day
+    df_input['month'] = df_input['time'].dt.month
+    df_input['year'] = df_input['time'].dt.year
+    df_input.drop(columns=['time'], inplace=True)
+
+    # One-hot encode the categorical features
+    categorical_columns = ['road_type', 'weather_condition', 'road_condition', 'time_of_day']
+    encoded_input = encoder.transform(df_input[categorical_columns])
+    encoded_column_names = encoder.get_feature_names_out(categorical_columns)
+    encoded_df = pd.DataFrame(encoded_input, columns=encoded_column_names)
+
+    # Add lag features (e.g., lag_speed_1, lag_speed_2)
+    df_input['lag_speed_1'] = input_data['lag_speed_1']
+    df_input['lag_speed_2'] = input_data['lag_speed_2']
+
+    # Drop original categorical columns and concatenate the one-hot encoded columns
+    df_input.drop(columns=categorical_columns, inplace=True)
+    df_input = pd.concat([df_input, encoded_df], axis=1)
+
+    # Align columns in the same order as during model fitting
+    feature_columns = scaler.feature_names_in_  # Ensure same order as during fitting
+    df_input = df_input[feature_columns]
+
+    # Scale the input using the scaler
+    df_scaled = scaler.transform(df_input)
+
+    return df_scaled
+
+
+
+# Route for DL model prediction
+@app.route('/predict/dl', methods=['POST'])
+def predict_dl():
+    input_data = request.json
+    processed_input = preprocess_input(input_data)
+
+    # Get the client's IP address
+    client_ip = request.remote_addr
+
+    # Reshape for the deep learning model
+    processed_input_reshaped = processed_input.reshape(1, 1, processed_input.shape[1])
+    prediction = best_dl_model.predict(processed_input_reshaped)
+
+    # Log the IP addresses
+    server_ip = get_server_ip()
+    print(f'Client IP: {client_ip}, Server (Edge) IP: {server_ip}')
+
+    # Convert to float before returning in jsonify
+    return jsonify({'predicted_speed': float(prediction[0][0])})
+
+
+# Route for ML model prediction
+@app.route('/predict/ml', methods=['POST'])
+def predict_ml():
+    input_data = request.json
+    processed_input = preprocess_input(input_data)
+
+    # Get the client's IP address
+    client_ip = request.remote_addr
+
+    # Predict using the machine learning model
+    prediction = best_ml_model.predict(processed_input)
+
+    # Log the IP addresses
+    server_ip = get_server_ip()
+    print(f'Client IP: {client_ip}, Server (Edge) IP: {server_ip}')
+
+    return jsonify({'predicted_speed': prediction[0]})
+
+
+# Run the app
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
